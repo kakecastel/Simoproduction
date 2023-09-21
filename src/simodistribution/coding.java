@@ -2,6 +2,9 @@ package CodingGame;
 
 import com.sun.org.apache.xpath.internal.objects.XString;
 
+import java.io.IOException;
+import java.io.Reader;
+import java.math.BigInteger;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
@@ -915,6 +918,256 @@ public void Salmon() {
 
         }
         return list.size();
+    }
+    public static List<Double> boundingRectangle(List<List<Double>> coordinatesPoints) {
+        if (coordinatesPoints == null || coordinatesPoints.isEmpty()) {
+            return null;
+        }
+
+        // Initialisation avec les coordonnées du premier point
+        double min_x = coordinatesPoints.get(0).get(0);
+        double min_y = coordinatesPoints.get(0).get(1);
+        double max_x = coordinatesPoints.get(0).get(0);
+        double max_y = coordinatesPoints.get(0).get(1);
+
+        // Parcours des points pour trouver les valeurs minimales et maximales
+        for (List<Double> point : coordinatesPoints) {
+            double x = point.get(0);
+            double y = point.get(1);
+            min_x = Math.min(min_x, x);
+            min_y = Math.min(min_y, y);
+            max_x = Math.max(max_x, x);
+            max_y = Math.max(max_y, y);
+        }
+
+        // Calcul de la largeur et de la hauteur du rectangle
+        double width = max_x - min_x;
+        double height = max_y - min_y;
+
+        // Création du rectangle englobant sous forme de liste
+        List<Double> rectangleDefinition = Arrays.asList(min_x, min_y, width, height);
+
+        return rectangleDefinition;
+    }
+
+    public static int computeTotalPrice(double unitPrice, String[] macarons) {
+        Map<String, Integer> flavorCount = new HashMap<>();
+        int totalPrice = 0;
+
+        for (String macaron : macarons) {
+            // Compter le nombre de chaque saveur
+            flavorCount.put(macaron, flavorCount.getOrDefault(macaron, 0) + 1);
+        }
+        for (String flavor : flavorCount.keySet()) {
+            int count = flavorCount.get(flavor);
+            int fullLots = count / 5;
+            int remainingMacarons = count % 5;
+            // Calcul du prix avec réduction en fonction du nombre de saveurs différentes
+            double lotPrice = (fullLots * 5 + remainingMacarons) * unitPrice;
+            double discount = 0;
+            if (flavorCount.size() == 2) {
+                discount = 0.10;
+            } else if (flavorCount.size() == 3) {
+                discount = 0.20;
+            } else if (flavorCount.size() == 4) {
+                discount = 0.30;
+            } else if (flavorCount.size() == 5) {
+                discount = 0.40;
+            }
+            totalPrice += (int) (lotPrice * (1 - discount));
+        }
+        return totalPrice;
+    }
+    public static String solve(List<String> families, List<Integer> sizes) {
+        int n = families.size();
+        boolean canEat = true;
+        while (canEat) {
+            canEat = false;
+            for (int i = 0; i < n; i++) {
+                if (i > 0 && families.get(i - 1).charAt(0) != families.get(i).charAt(0) && sizes.get(i - 1) < sizes.get(i)) {
+                    sizes.set(i, sizes.get(i) + sizes.get(i - 1));
+                    sizes.remove(i - 1);
+                    families.remove(i - 1);
+                    n--;
+                    canEat = true;
+                } else if (i < n - 1 && families.get(i + 1).charAt(0) != families.get(i).charAt(0) && sizes.get(i + 1) < sizes.get(i)) {
+                    sizes.set(i, sizes.get(i) + sizes.get(i + 1));
+                    sizes.remove(i + 1);
+                    families.remove(i + 1);
+                    n--;
+                    canEat = true;
+                }
+            }
+        }
+        int maxIndex = 0;
+        int maxSize = sizes.get(0);
+        for (int i = 1; i < n; i++) {
+            if (sizes.get(i) > maxSize) {
+                maxIndex = i;
+                maxSize = sizes.get(i);
+            }
+        }
+        return families.get(maxIndex) + " " + maxSize;
+    }
+
+    public static String get(int l, int c) {
+        if (c == 0 || c == l) {
+            return "1";
+        }
+
+        if (c > l / 2) {
+            c = l - c; // Optimisation pour réduire le nombre de calculs
+        }
+
+        BigInteger[][] dp = new BigInteger[l + 1][c + 1];
+
+        for (int i = 0; i <= l; i++) {
+            for (int j = 0; j <= Math.min(i, c); j++) {
+                if (j == 0 || j == i) {
+                    dp[i][j] = BigInteger.ONE;
+                } else {
+                    dp[i][j] = dp[i - 1][j - 1].add(dp[i - 1][j]);
+                }
+            }
+        }
+
+        return dp[l][c].toString();
+    }
+
+    public static int[][] sandpile(int[][] pile, int n) {
+        int height = pile.length;
+        int width = pile[0].length;
+        for (int k = 0; k < n; k++) {
+            // Créer une copie temporaire de la pile pour stocker les modifications
+            int[][] tempPile = new int[height][width];
+            for (int i = 0; i < height; i++) {
+                for (int j = 0; j < width; j++) {
+                    int grains = pile[i][j];
+                    // Ajouter le grain à la case centrale
+                    tempPile[i][j] += grains;
+                    // Si la case centrale a plus de 3 grains, redistribuer les grains aux voisins
+                    if (grains >= 4) {
+                        tempPile[i][j] -= 4;
+                        if (i > 0) {
+                            tempPile[i - 1][j]++;
+                        }
+                        if (i < height - 1) {
+                            tempPile[i + 1][j]++;
+                        }
+                        if (j > 0) {
+                            tempPile[i][j - 1]++;
+                        }
+                        if (j < width - 1) {
+                            tempPile[i][j + 1]++;
+                        }
+                    }
+                }
+            }
+            // Mettre à jour la pile avec les modifications
+            pile = tempPile;
+        }
+        return pile;
+    }
+
+    public static void print(Reader reader) throws IOException {
+        try (Reader resourceReader = reader) {
+            int code = resourceReader.read();
+            while (code != -1) {
+                System.out.print((char) code);
+                code = resourceReader.read();
+            }
+        } catch (IOException e) {
+            // Gérer les exceptions si nécessaire
+            e.printStackTrace();
+        }
+    }
+    public static List<Integer> computeChecksums(List<Integer> fileBytes) {
+        List<Integer> checksums = new ArrayList<>();
+        int currentIndex = 0;
+        while (currentIndex < fileBytes.size()) {
+            int chunkSize = fileBytes.get(currentIndex);
+            int checksum = 0;
+            for (int i = 0; i < chunkSize; i++) {
+                currentIndex++;
+                if (currentIndex >= fileBytes.size()) {
+                    // Si nous atteignons la fin du tableau, nous sortons de la boucle
+                    break;
+                }
+                checksum += fileBytes.get(currentIndex);
+            }
+            // Conserver uniquement les 8 bits de poids faible
+            checksum %= 256;
+            checksums.add(checksum);
+            currentIndex++;
+        }
+        return checksums;
+    }
+
+    public static int maxCities(String[] cities, int[] distances) {
+        int n = cities.length;
+        if (n == 0) {
+            return 0;
+        }
+        // Initialisation de la table de programmation dynamique (DP) avec des 1 car chaque ville peut être visitée au moins une fois
+        int[] dp = new int[n];
+        Arrays.fill(dp, 1);
+        // Parcourir chaque ville et calculer le nombre maximum de villes visitées
+        for (int i = 1; i < n; i++) {
+            for (int j = 0; j < i; j++) {
+                if (cities[i].compareTo(cities[j]) > 0 && distances[i] > distances[j]) {
+                    dp[i] = Math.max(dp[i], dp[j] + 1);
+                }
+            }
+        }
+        // La réponse est le maximum dans la table DP
+        int maxCities = 0;
+        for (int i = 0; i < n; i++) {
+            maxCities = Math.max(maxCities, dp[i]);
+        }
+
+        return maxCities;
+    }
+    public static String solve(int width, int height, int nbBlocks, List<String> grid) {
+        // Parcourir la grille pour trouver le prochain bloc à déplacer
+        for (int blockNum = 0; blockNum < nbBlocks; blockNum++) {
+            // Rechercher la position du bloc actuel
+            int blockX = -1, blockY = -1;
+            for (int i = 0; i < height; i++) {
+                for (int j = 0; j < width; j++) {
+                    if (grid.get(i).charAt(j) == Integer.toString(blockNum).charAt(0)) {
+                        blockX = j;
+                        blockY = i;
+                        break;
+                    }
+                }
+                if (blockX != -1) {
+                    break;
+                }
+            }
+
+            // Vérifier s'il est possible de déplacer le bloc vers la droite
+            if (blockX < width - 1 && grid.get(blockY).charAt(blockX + 1) == '.') {
+                return blockNum + " RIGHT";
+            }
+
+            // Vérifier s'il est possible de déplacer le bloc vers le bas
+            if (blockY < height - 1 && grid.get(blockY + 1).charAt(blockX) == '.') {
+                return blockNum + " DOWN";
+            }
+
+            // Vérifier s'il est possible de déplacer le bloc vers la gauche
+            if (blockX > 0 && grid.get(blockY).charAt(blockX - 1) == '.') {
+                return blockNum + " LEFT";
+            }
+
+            // Vérifier s'il est possible de déplacer le bloc vers le haut
+            if (blockY > 0 && grid.get(blockY - 1).charAt(blockX) == '.') {
+                return blockNum + " UP";
+            }
+        }
+
+        // Aucun bloc à déplacer
+        return "";
     }
 
     public static void main(String[] args) {
